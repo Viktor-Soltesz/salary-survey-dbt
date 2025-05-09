@@ -1,0 +1,212 @@
+# mart_survey_aggregates.yaml
+version: 2
+
+models:
+  - name: mart_survey__aggregates
+    description: |
+      This model provides aggregated salary statistics derived from the cleaned, normalized, and outlier-flagged survey data.
+      It groups the data by key demographic and job-related attributes such as country, year, seniority level, job category, and company size.
+      The resulting aggregates, including median, average, percentiles, and standard deviation, are designed to support
+      high-level dashboarding, trend analysis, and comparative studies of developer salaries across different segments.
+      Outliers are excluded from these calculations to provide a more representative view of typical salary ranges.
+    meta:
+      owner: solteesz.viktor@gmail.com
+      maturity: beta
+      exposed: true
+      sla: yearly         # Service Level Agreement
+      pii: false          # Personally Identifiable Information
+      source_system: software-developer-salaries/surveys
+      related_dashboards: tableau_salary_dashboard
+
+    columns:
+      - name: country
+        description: "{{ doc('country') }}"
+        data_type: STRING
+        tests:
+          - not_null
+          # - relationship:
+          #     to: ref('stg_seed__country_mapping')
+          #     field: country_code
+
+      - name: country_name
+        description: "{{ doc('country_name') }}"
+        data_type: STRING
+        tests:
+          - not_null
+
+      - name: year
+        description: "{{ doc('year') }}"
+        data_type: INT64
+        tests:
+          - not_null
+          - accepted_values_year_raw  # custom generic test
+
+      - name: seniority_level
+        description: "{{ doc('seniority_level') }}"
+        data_type: STRING
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['en', 'mi', 'se', 'ex', 'other']
+
+      - name: job_category
+        description: "{{ doc('job_category') }}"
+        data_type: STRING
+        tests:
+          - not_null
+
+      - name: company_size
+        description: "{{ doc('company_size') }}"
+        data_type: STRING
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['s', 'm', 'l', 'unknown']
+
+      - name: entry_count
+        description: |
+          The number of individual survey entries that fall into this specific
+          combination of grouping attributes (country, year, seniority, job category, company size)
+          after filtering out outliers. This represents the sample size for the aggregate measures.
+          Groups are only included if this count is greater than 20.
+        data_type: INT64
+        tests:
+          - not_null
+          # - dbt_utils.expression_is_true:
+          #     expression: ">= 21"
+
+
+      # Measures of central tendency
+      - name: median_salary_norm
+        description: |
+          The median annual salary for this group, normalized by both the country's
+          inflation factor (relative to a base year, e.g., 2024) and a measure of
+          economic purchasing power like GDP per capita (PPP). This aims to provide
+          a more comparable salary figure across different countries and years.
+        data_type: NUMERIC
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0" # Median can be 0 if all entries in a small group are 0 after normalization
+
+
+      - name: median_salary_2024
+        description: |
+          The median annual salary for this group, adjusted only for inflation
+          to a common base year (e.g., 2024). This helps in comparing salaries
+          over time within the same country or across countries without accounting
+          for differences in economic output or cost of living beyond inflation.
+        data_type: NUMERIC
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+
+      - name: median_salary_gdp
+        description: |
+          The median annual salary for this group, normalized by a country's
+          economic output measure such as GDP per capita (PPP). This can indicate
+          salary relative to the local economic context.
+        data_type: NUMERIC
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+
+      - name: avg_salary_norm
+        description: |
+          The mean (average) annual salary for this group, normalized by both
+          inflation (relative to 2024) and GDP per capita (PPP).
+        data_type: NUMERIC
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+
+      - name: avg_salary_2024
+        description: |
+          The mean (average) annual salary for this group, adjusted only for
+          inflation to a common base year (2024).
+        data_type: NUMERIC
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+
+      - name: avg_salary_gdp
+        description: |
+          The mean (average) annual salary for this group, normalized by GDP
+          per capita (PPP).
+        data_type: NUMERIC
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+
+      # Measures of spread
+      - name: p25_salary_norm
+        description: |
+          The 25th percentile (first quartile) of the normalized salary
+          (inflation and GDP adjusted) for this group. This indicates the value
+          below which 25% of the salaries fall.
+        data_type: NUMERIC
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+
+      - name: p75_salary_norm
+        description: |
+          The 75th percentile (third quartile) of the normalized salary
+          (inflation and GDP adjusted) for this group. This indicates the value
+          below which 75% of the salaries fall.
+        data_type: NUMERIC
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+          - dbt_utils.expression_is_true: # P75 should be >= P25
+              expression: ">= p25_salary_norm"
+
+
+      - name: stddev_salary_norm
+        description: |
+          The standard deviation of the normalized salary (inflation and GDP adjusted)
+          for this group. A measure of the dispersion or spread of salaries around the mean.
+          Higher values indicate greater variability in salaries within the group.
+        data_type: FLOAT64 # Standard deviation usually results in a float
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+
+      - name: iqr_salary_norm
+        description: |
+          The Interquartile Range (IQR) of the normalized salary (inflation and GDP adjusted)
+          for this group. Calculated as the difference between the 75th percentile (P75)
+          and the 25th percentile (P25). It represents the range containing the middle 50%
+          of the salary data and is a robust measure of spread, less affected by outliers
+          than standard deviation.
+        data_type: NUMERIC # Difference between two NUMERICs
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+      - name: skewness_indicator
+        description: |
+          A simple indicator of the skewness of the normalized salary distribution
+          for this group, calculated as the difference between the mean and the median
+          (avg_salary_norm - median_salary_norm).
+          A positive value suggests the distribution is right-skewed (tail extends to higher values, mean > median),
+          while a negative value suggests it is left-skewed (tail extends to lower values, mean < median).
+          A value close to zero suggests a roughly symmetrical distribution.
+        data_type: NUMERIC # Difference between two NUMERICs
+        tests:
+          - not_null # Can be zero or negative, so no >= 0 test needed here

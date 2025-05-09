@@ -1,0 +1,25 @@
+# Temporary files
+*.tmp
+*.bak
+*.swp
+
+# Compiled files
+__pycache__/
+*.pyc
+
+# venv
+venv/
+.venv/
+
+# Ignore DBT generated files
+target/
+logs/
+dbt_modules/
+dbt_packages/
+
+# DBT artifacts (these are created during runs)
+manifest.json
+run_results.json
+catalog.json
+partial_parse.msgpack
+partial_parse.msgpack.msgpack

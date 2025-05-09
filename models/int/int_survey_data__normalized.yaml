@@ -1,0 +1,78 @@
+# int_survey_data__normalized.yaml
+version: 2
+
+models:
+  - name: int_survey_data__normalized
+    description: >
+      Enriches the cleaned survey data with country-level economic indicators and inflation adjustments.
+      Produces normalized salary values by converting to 2024 values and scaling by GDP per capita.
+    meta:
+      owner: solteesz.viktor@gmail.com
+      maturity: beta
+      exposed: false
+      sla: yearly         # Service Level Agreement
+      pii: false          # Personally Identifiable Information
+      source_system: software-developer-salaries/surveys
+      related_dashboards: tableau_salary_dashboard
+
+    columns:
+      - name: survey_entry_id
+        description: "{{ doc('survey_entry_id') }}"
+
+      - name: entry_number
+        description: "{{ doc('entry_number') }}"
+
+      - name: year
+        description: "{{ doc('year') }}"
+
+      - name: seniority_level
+        description: "{{ doc('seniority_level') }}"
+
+      - name: employment_status
+        description: "{{ doc('employment_status') }}"
+
+      - name: salary
+        description: "{{ doc('salary') }}"
+        tests:
+          - not_null
+
+      - name: country
+        description: "{{ doc('country') }}"
+        tests:
+          - not_null
+
+      - name: company_size
+        description: "{{ doc('company_size') }}"
+
+      - name: job_category
+        description: "{{ doc('job_category') }}"
+
+      - name: country_name
+        description: "{{ doc('country_name') }}"
+        tests:
+          - not_null
+
+      - name: gdp_ppp
+        description: "{{ doc('gdp_ppp') }}"
+        tests:
+          - not_null
+
+      - name: factor_to_2024
+        description: "{{ doc('factor_to_2024') }}"
+        tests:
+          - not_null
+
+      - name: salary_norm2024
+        description: "{{ doc('salary_norm2024') }}"
+        tests:
+          - not_null
+
+      - name: salary_normgdp
+        description: "{{ doc('salary_normgdp') }}"
+        tests:
+          - not_null
+
+      - name: salary_norm
+        description: "{{ doc('salary_norm') }}"
+        tests:
+          - not_null

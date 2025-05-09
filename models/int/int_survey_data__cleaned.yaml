@@ -1,0 +1,68 @@
+# int_survey_data__cleaned.yaml
+version: 2
+
+models:
+  - name: int_survey_data__cleaned
+    description: >
+      This intermediate model cleans and standardizes raw survey data. It deduplicates entries,
+      drops rows with NULL values in key dimensions, and categorizes free-text fields such as
+      seniority level, company size, and more into consistent enums.
+    meta:
+      owner: solteesz.viktor@gmail.com
+      maturity: beta
+      exposed: false
+      sla: yearly         # Service Level Agreement
+      pii: false          # Personally Identifiable Information
+      source_system: software-developer-salaries/surveys
+      related_dashboards: tableau_salary_dashboard
+
+    columns:
+      - name: survey_entry_id
+        description: "{{ doc('survey_entry_id') }}"
+        tests:
+          - not_null
+
+      - name: entry_number
+        description: "{{ doc('entry_number') }}"
+        tests:
+          - not_null
+          - unique
+          
+      - name: year
+        description: "{{ doc('year') }}"
+        tests:
+          - not_null
+
+      - name: seniority_level
+        description: "{{ doc('seniority_level') }}"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['en', 'mi', 'se', 'ex', 'other']
+
+      - name: employment_status
+        description: "{{ doc('employment_status') }}"
+        tests:
+          - not_null
+
+      - name: salary
+        description: "{{ doc('salary') }}"
+        tests:
+          - not_null
+
+      - name: country
+        description: "{{ doc('country') }}"
+        tests:
+          - not_null
+
+      - name: company_size
+        description: "{{ doc('company_size') }}"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['s', 'm', 'l', 'other']
+
+      - name: job_category
+        description: "{{ doc('job_category') }}"
+        tests:
+          - not_null

@@ -1,0 +1,123 @@
+name: DBT Run
+
+on:
+  push:
+    paths:
+      - '.github/workflows/dbt_run.yaml'
+  workflow_dispatch:
+  #schedule:
+  #  - cron: '0 5 * * 1'  # Every Monday at 5:00 AM UTC
+
+jobs:
+  dbt-run:
+    if: true  # Enable/disable manually
+    runs-on: ubuntu-latest
+    environment: prod
+
+    env:
+      GCP_PROJECT_ID: ${{ vars.PROJECT_ID }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Cache gcloud CLI config/plugins
+        uses: actions/cache@v3
+        with:
+          path: ~/.config/gcloud
+          key: ${{ runner.os }}-gcloud-${{ hashFiles('.github/workflows/dbt_run.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-gcloud-
+
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f
+        with:
+          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+      - name: Write GCP credentials to file for DBT
+        run: |
+          echo "$GOOGLE_CREDENTIALS" > /tmp/gcp_keyfile.json
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+      - name: Install gcloud CLI
+        uses: google-github-actions/setup-gcloud@6189d56e4096ee891640bb02ac264be376592d6a
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install DBT and dependencies
+        run: |
+          pip install dbt-bigquery
+
+      - name: Install DBT dependencies (packages)
+        run: |
+          dbt deps --profiles-dir ./profiles
+
+      - name: Debug DBT connection
+        run: |
+          dbt debug --target prod-dbt-env --profiles-dir ./profiles
+
+      - name: Check source freshness
+        run: |
+          dbt source freshness --target prod-dbt-env --profiles-dir ./profiles
+
+      - name: Run DBT seeds
+        run: |
+          dbt seed --target prod-dbt-env --profiles-dir ./profiles
+
+      - name: Run DBT models
+        run: |
+          dbt run --target prod-dbt-env --profiles-dir ./profiles
+
+      - name: Run DBT snapshots
+        run: |
+          dbt snapshot --target prod-dbt-env --profiles-dir ./profiles
+
+      - name: Run DBT tests
+        run: |
+          dbt test  --target prod-dbt-env --profiles-dir ./profiles
+
+  notify-slack-success:
+    needs: dbt-run
+    if: success()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Notify Slack of successful upload
+        uses: rtCamp/action-slack-notify@e31e87e03dd19038e411e38ae27cbad084a90661
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_USERNAME: 'GitHub Actions Bot'
+          SLACK_COLOR: '#36a64f'  # green
+          SLACK_MESSAGE: |
+            ✅ *CSV Upload Workflow Succeeded*
+            • Repo: `${{ github.repository }}`
+            • Branch: `${{ github.ref_name }}`
+            • Actor: `${{ github.actor }}`
+            • Workflow: `${{ github.workflow }}`
+            • Run: <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View logs>
+
+  notify-slack-failure:
+    needs: dbt-run
+    if: failure()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Notify Slack of failed upload
+        uses: rtCamp/action-slack-notify@e31e87e03dd19038e411e38ae27cbad084a90661
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_USERNAME: 'GitHub Actions Bot'
+          SLACK_COLOR: '#FF0000'  # red
+          SLACK_MESSAGE: |
+            ❌ *CSV Upload Workflow Failed*
+            • Repo: `${{ github.repository }}`
+            • Branch: `${{ github.ref_name }}`
+            • Actor: `${{ github.actor }}`
+            • Workflow: `${{ github.workflow }}`
+            • Run: <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View logs>

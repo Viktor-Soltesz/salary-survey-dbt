@@ -1,0 +1,22 @@
+#profiles.yaml
+# This configures dbt when run through GITHUB ACTIONS!
+# Otherwise, without run-specifications, DBT uses the profile stored in C/user/.dbt/profiles.yml
+salary_survey: # this needs to match the profile: in your dbt_project.yml file
+  target: dev-dbt-env # The default for any dbt commands
+  outputs:
+    dev-dbt-env:
+      type: bigquery
+      method: oauth
+      project: software-developer-salaries
+      dataset: surveys
+      location: europe-west9
+      threads: 4
+
+    prod-dbt-env:
+      type: bigquery
+      method: service-account
+      project: software-developer-salaries
+      dataset: surveys
+      location: europe-west9
+      threads: 4
+      keyfile: /tmp/gcp_keyfile.json

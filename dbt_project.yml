@@ -1,0 +1,48 @@
+# dbt_project.yml
+name: 'salary_survey'
+version: '1.0.0'
+config-version: 2
+
+vars:
+  dbt_date:time_zone: 'Europe/Berlin'
+
+profile: 'salary_survey' # This setting configures which "profile" dbt uses for this project.
+
+model-paths: ["models"]
+# analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+docs-paths: ["docs"]
+
+# target-path: "dbt/target"  # directory which will store compiled SQL files
+clean-targets:         # directories to be removed by `dbt clean`
+  - "target"
+  - "dbt_packages"
+
+# Configuring models
+# Full documentation: https://docs.getdbt.com/docs/configuring-models
+models:
+  +persist_docs: # to upload description to the data warehouse
+    relation: true
+    columns: true
+  stg:
+    +materialized: view
+  int:
+    +materialized: view
+  mart:
+    +materialized: table
+  metric:
+    +materialized: table # view
+
+seeds:
+  +schema: seeds
+
+tests:
+  dbt:
+    +severity: warn
+
+snapshots:
+  salary_survey:
+    +target_schema: salary_survey_snapshots
