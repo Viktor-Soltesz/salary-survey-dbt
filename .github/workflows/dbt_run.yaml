@@ -82,8 +82,89 @@ jobs:
         run: |
           dbt test  --target prod-dbt-env --profiles-dir ./profiles
 
-  notify-slack-success:
+      # Elementary Data Reliability (EDR) steps
+      - name: Run Elementary models
+        # This step runs the Elementary dbt package models, which collect data for the report.
+        run: |
+          dbt run --target elementary --profiles-dir ./profiles --select elementary
+        env:
+          # Ensure the profiles directory is correctly set for Elementary's dbt commands
+          DBT_PROFILES_DIR: ./profiles
+
+      - name: Generate Elementary Data Reliability Report
+        # This command generates the static HTML report files.
+        run: |
+          edr generate-report --profiles-dir ./profiles --target elementary
+        env:
+          # Ensure the profiles directory is correctly set for Elementary's edr commands
+          DBT_PROFILES_DIR: ./profiles
+
+      - name: Upload Elementary artifacts
+        # Uploads the generated report files as a workflow artifact,
+        # so they can be accessed by the deployment job.
+        uses: actions/upload-artifact@v3
+        with:
+          name: elementary-report
+          path: target/elementary/ # Elementary's default output directory for reports
+          retention-days: 1 # Keep artifacts for 1 day to save storage
+
+  deploy-elementary-report:
+    # This job will only run after the 'dbt-run' job has successfully completed.
     needs: dbt-run
+    runs-on: ubuntu-latest
+    environment: prod # Use the same environment as the dbt-run job
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          # Use GITHUB_TOKEN to allow pushing to the gh-pages-elementary branch.
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Fetch all history for all branches to ensure gh-pages-elementary exists or can be created.
+          fetch-depth: 0
+
+      - name: Download Elementary artifacts
+        # Downloads the report artifacts uploaded by the 'dbt-run' job.
+        uses: actions/download-artifact@v3
+        with:
+          name: elementary-report
+          path: elementary-report-download/ # Download the artifacts to a temporary directory
+
+      - name: Configure Git
+        # Set up Git user name and email for committing changes.
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Prepare and push to gh-pages-elementary
+        run: |
+          # Try to checkout the gh-pages-elementary branch. If it doesn't exist, create it.
+          git checkout gh-pages-elementary || git checkout -b gh-pages-elementary
+
+          # Remove all existing files in the branch (except the .git directory)
+          # to ensure a clean slate for the new report.
+          find . -maxdepth 1 -not -name '.git' -not -name '.' -exec rm -rf {} +
+
+          # Copy the downloaded elementary report files from the temporary directory
+          # to the root of the gh-pages-elementary branch.
+          cp -r elementary-report-download/* .
+
+          # Add all changes to the Git staging area.
+          git add .
+
+          # Check if there are any actual changes to commit.
+          # This prevents creating empty commits if the report hasn't changed.
+          if ! git diff-index --quiet HEAD; then
+            git commit -m "Update Elementary Data Reliability Report"
+            # Force push to the gh-pages-elementary branch.
+            # This is often necessary for gh-pages branches to overwrite history.
+            git push origin gh-pages-elementary
+          else
+            echo "No changes to the Elementary report. Skipping commit and push."
+          fi
+
+  notify-slack-success:
+    needs: deploy-elementary-report
     if: success()
     runs-on: ubuntu-latest
 
@@ -103,7 +184,7 @@ jobs:
             • Run: <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View logs>
 
   notify-slack-failure:
-    needs: dbt-run
+    needs: deploy-elementary-report
     if: failure()
     runs-on: ubuntu-latest
 

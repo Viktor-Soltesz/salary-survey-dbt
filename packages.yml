@@ -12,5 +12,8 @@ packages:
   - package: godatadriven/dbt_date
     version: [">=0.7.0", "<1.0.0"]
 
+  - package: elementary-data/elementary
+    version: 0.18.3
+
   - git: "https://github.com/EqualExperts/dbt-unit-testing.git"
     revision: "119aaee2c265b693876a63de72b04c308cd3e3e2"

@@ -23,3 +23,6 @@ run_results.json
 catalog.json
 partial_parse.msgpack
 partial_parse.msgpack.msgpack
+
+# Elementary files
+edr_target/

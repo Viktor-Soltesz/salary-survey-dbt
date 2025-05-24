@@ -20,3 +20,15 @@ salary_survey: # this needs to match the profile: in your dbt_project.yml file
       location: europe-west9
       threads: 4
       keyfile: /tmp/gcp_keyfile.json
+
+elementary:
+  outputs:
+    default:
+      type: bigquery
+      method: service-account
+      project: software-developer-salaries
+      dataset: surveys_elementary
+      location: europe-west9
+      threads: 4
+      keyfile: /tmp/gcp_keyfile.json
+  target: default

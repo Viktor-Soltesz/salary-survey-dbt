@@ -6,7 +6,9 @@ packages:
   - package: dbt-labs/codegen
     version: 0.13.1
   - package: godatadriven/dbt_date
-    version: 0.12.0
+    version: 0.13.0
+  - package: elementary-data/elementary
+    version: 0.18.3
   - git: https://github.com/EqualExperts/dbt-unit-testing.git
     revision: 119aaee2c265b693876a63de72b04c308cd3e3e2
-sha1_hash: de6cdfe10ef02765bb92e196108df5a6d854e6ca
+sha1_hash: f26a66d4683fd68cb504d8332eb3af6ed0e706c0
