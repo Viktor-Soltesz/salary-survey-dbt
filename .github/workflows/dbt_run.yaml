@@ -94,7 +94,7 @@ jobs:
       - name: Generate Elementary Data Reliability Report
         # This command generates the static HTML report files.
         run: |
-          edr report --profile-target default --profiles-dir ./profiles --file-path edr_target/elementary_report.html
+          edr report --profile-target default --profiles-dir ./profiles
         env:
           # Ensure the profiles directory is correctly set for Elementary's edr commands
           DBT_PROFILES_DIR: ./profiles
@@ -123,41 +123,30 @@ jobs:
           # Fetch all history for all branches to ensure gh-pages-elementary exists or can be created.
           fetch-depth: 0
 
-      - name: Download Elementary artifacts
-        # Downloads the 'elementary-report' artifact, which is the 'edr_target' directory.
-        uses: actions/download-artifact@v4
-        with:
-          name: elementary-report
-          path: elementary-report-download/ # This will contain the 'edr_target' folder
-
       - name: Configure Git
-        # Set up Git user name and email for committing changes.
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Prepare and push to gh-pages-elementary
+      - name: Switch to gh-pages-elementary branch
         run: |
-          # Try to checkout the gh-pages-elementary branch. If it doesn't exist, create it.
           git checkout gh-pages-elementary || git checkout -b gh-pages-elementary
 
-          # Remove all existing files in the branch (except the .git directory)
-          # to ensure a clean slate for the new report.
+      - name: Clean the branch
+        run: |
           find . -maxdepth 1 -not -name '.git' -not -name '.' -exec rm -rf {} +
 
-          # Copy the *contents* of the downloaded artifact (which are the files from edr_target)
-          # to the root of the gh-pages-elementary branch.
-          cp -r elementary-report-download/* .
+      - name: Download Elementary artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: elementary-report
+          path: .  # Download directly to the current directory
 
-          # Add all changes to the Git staging area.
+      - name: Commit and push changes
+        run: |
           git add .
-
-          # Check if there are any actual changes to commit.
-          # This prevents creating empty commits if the report hasn't changed.
           if ! git diff-index --quiet HEAD; then
             git commit -m "Update Elementary Data Reliability Report"
-            # Force push to the gh-pages-elementary branch.
-            # This is often necessary for gh-pages branches to overwrite history.
             git push origin gh-pages-elementary
           else
             echo "No changes to the Elementary report. Skipping commit and push."
