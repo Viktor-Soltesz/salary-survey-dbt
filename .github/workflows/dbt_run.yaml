@@ -123,34 +123,52 @@ jobs:
           # Fetch all history for all branches to ensure gh-pages-elementary exists or can be created.
           fetch-depth: 0
 
-      - name: Configure Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Switch to gh-pages-elementary branch
-        run: |
-          git checkout gh-pages-elementary || git checkout -b gh-pages-elementary
-
-      - name: Clean the branch
-        run: |
-          find . -maxdepth 1 -not -name '.git' -not -name '.' -exec rm -rf {} +
-
       - name: Download Elementary artifacts
         uses: actions/download-artifact@v4
         with:
           name: elementary-report
-          path: .  # Download directly to the current directory
-
-      - name: Commit and push changes
+          path: elementary-report-download/
+  
+      - name: Push Elementary report to gh-pages-elementary branch
         run: |
+          # Configure Git user
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+  
+          # Create a temporary directory for the gh-pages-elementary branch
+          mkdir gh_pages_temp
+          cd gh_pages_temp
+  
+          # Initialize a new Git repository
+          git init
+  
+          # Set the remote with authenticated URL
+          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+  
+          # Fetch the existing gh-pages-elementary branch if it exists
+          git fetch origin gh-pages-elementary || echo "No existing gh-pages-elementary branch found"
+  
+          # Checkout the branch, or create it if it doesn’t exist
+          git checkout gh-pages-elementary || git checkout -b gh-pages-elementary
+  
+          # Remove all tracked files to start fresh (preserving .git)
+          git rm -r '*' || echo "No files to remove"
+  
+          # Copy only the Elementary report files
+          cp -r ../elementary-report-download/* .
+  
+          # Add all files
           git add .
-          if ! git diff-index --quiet HEAD; then
+  
+          # Commit changes if there are any
+          if ! git diff-index --quiet HEAD || [ -n "$(git status --porcelain)" ]; then
             git commit -m "Update Elementary Data Reliability Report"
             git push origin gh-pages-elementary
           else
-            echo "No changes to the Elementary report. Skipping commit and push."
+            echo "No changes to commit. Skipping push."
           fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   notify-slack-success:
     needs: deploy-elementary-report
