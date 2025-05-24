@@ -94,7 +94,7 @@ jobs:
       - name: Generate Elementary Data Reliability Report
         # This command generates the static HTML report files.
         run: |
-          edr report --profile elementary --target default --profiles-dir ./profiles
+          edr report --profile-target default --profiles-dir ./profiles
         env:
           # Ensure the profiles directory is correctly set for Elementary's edr commands
           DBT_PROFILES_DIR: ./profiles
