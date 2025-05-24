@@ -86,7 +86,7 @@ jobs:
       - name: Run Elementary models
         # This step runs the Elementary dbt package models, which collect data for the report.
         run: |
-          dbt run --target elementary --profiles-dir ./profiles --select elementary
+          dbt run --profile elementary --target default --profiles-dir ./profiles --select elementary
         env:
           # Ensure the profiles directory is correctly set for Elementary's dbt commands
           DBT_PROFILES_DIR: ./profiles
@@ -94,7 +94,7 @@ jobs:
       - name: Generate Elementary Data Reliability Report
         # This command generates the static HTML report files.
         run: |
-          edr generate-report --profiles-dir ./profiles --target elementary
+          edr report --profile elementary --target default --profiles-dir ./profiles
         env:
           # Ensure the profiles directory is correctly set for Elementary's edr commands
           DBT_PROFILES_DIR: ./profiles
