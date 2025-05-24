@@ -125,7 +125,7 @@ jobs:
 
       - name: Download Elementary artifacts
         # Downloads the report artifacts uploaded by the 'dbt-run' job.
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: elementary-report
           path: elementary-report-download/ # Download the artifacts to a temporary directory
