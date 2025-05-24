@@ -52,7 +52,7 @@ jobs:
 
       - name: Install DBT and dependencies
         run: |
-          pip install dbt-bigquery dbt-elementary
+          pip install dbt-bigquery 'elementary-data[bigquery]'
 
       - name: Install DBT dependencies (packages)
         run: |
