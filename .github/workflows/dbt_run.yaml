@@ -94,7 +94,7 @@ jobs:
       - name: Generate Elementary Data Reliability Report
         # This command generates the static HTML report files.
         run: |
-          edr report --profile-target default --profiles-dir ./profiles
+          edr report --profile-target default --profiles-dir ./profiles --file-path edr_target/elementary_report.html
         env:
           # Ensure the profiles directory is correctly set for Elementary's edr commands
           DBT_PROFILES_DIR: ./profiles
@@ -105,7 +105,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: elementary-report
-          path: target/elementary/ # Elementary's default output directory for reports
+          path: edr_target/ # Elementary's default output directory for reports
           retention-days: 1 # Keep artifacts for 1 day to save storage
 
   deploy-elementary-report:
@@ -124,11 +124,11 @@ jobs:
           fetch-depth: 0
 
       - name: Download Elementary artifacts
-        # Downloads the report artifacts uploaded by the 'dbt-run' job.
+        # Downloads the 'elementary-report' artifact, which is the 'edr_target' directory.
         uses: actions/download-artifact@v4
         with:
           name: elementary-report
-          path: elementary-report-download/ # Download the artifacts to a temporary directory
+          path: elementary-report-download/ # This will contain the 'edr_target' folder
 
       - name: Configure Git
         # Set up Git user name and email for committing changes.
@@ -145,7 +145,7 @@ jobs:
           # to ensure a clean slate for the new report.
           find . -maxdepth 1 -not -name '.git' -not -name '.' -exec rm -rf {} +
 
-          # Copy the downloaded elementary report files from the temporary directory
+          # Copy the *contents* of the downloaded artifact (which are the files from edr_target)
           # to the root of the gh-pages-elementary branch.
           cp -r elementary-report-download/* .
 
