@@ -52,7 +52,7 @@ jobs:
 
       - name: Install DBT and dependencies
         run: |
-          pip install dbt-bigquery
+          pip install dbt-bigquery dbt-elementary
 
       - name: Install DBT dependencies (packages)
         run: |
@@ -102,7 +102,7 @@ jobs:
       - name: Upload Elementary artifacts
         # Uploads the generated report files as a workflow artifact,
         # so they can be accessed by the deployment job.
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: elementary-report
           path: target/elementary/ # Elementary's default output directory for reports
