@@ -34,7 +34,7 @@ models:
   mart:
     +materialized: table
   metric:
-    +materialized: table # view
+    +materialized: incremental
   elementary:
     +schema: "elementary"
 

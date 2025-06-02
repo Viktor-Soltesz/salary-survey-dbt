@@ -198,7 +198,7 @@ jobs:
           SLACK_USERNAME: 'GitHub Actions Bot'
           SLACK_COLOR: '#36a64f'  # green
           SLACK_MESSAGE: |
-            ✅ *CSV Upload Workflow Succeeded*
+            ✅ *DBT Run Workflow Succeeded*
             • Repo: `${{ github.repository }}`
             • Branch: `${{ github.ref_name }}`
             • Actor: `${{ github.actor }}`
@@ -218,7 +218,7 @@ jobs:
           SLACK_USERNAME: 'GitHub Actions Bot'
           SLACK_COLOR: '#FF0000'  # red
           SLACK_MESSAGE: |
-            ❌ *CSV Upload Workflow Failed*
+            ❌ *DBT Run Workflow Failed*
             • Repo: `${{ github.repository }}`
             • Branch: `${{ github.ref_name }}`
             • Actor: `${{ github.actor }}`

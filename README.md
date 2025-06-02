@@ -1,66 +1,111 @@
-# Data Modeling - Salary Survey
+# salary-survey-dbt
 
-This project analyzes survey responses from software developers around the world, focusing on salary normalization, data quality, and model transparency. It is built in BigQuery using DBT and follows layered transformations for clarity and modularity.
+## Modeling & Transformation (Stage 2 of 6)
 
-## Project Goals
+This repository performs semantic modeling, normalization, data cleaning, and metric creation using **DBT** on data loaded into BigQuery.  
+It transforms raw but structured survey data into reliable, analyzable models for downstream statistical analysis and business intelligence.  
+Part of a modular data stack for analyzing global developer salary survey responses.
 
-- Practice DBT with a semi-structured dataset
-- Normalize salaries using inflation and GDP data
-- Demonstrate professional data modeling and testing practices
+---
 
-## Data Sources
+## Project Overview
 
-- `survey_data` – Raw survey data (CSV, ~16,000 rows)
-- `seed__country_economic_factors` – Median/mean salary benchmarks by country
-- `seed__inflation_factors` – Adjustment factors relative to 2024
-- `seed__country_mapping` – 2-letter to full country name mapping
+This project is split into modular repositories, each handling one part of the full ELT and analytics pipeline:
 
-## DBT Layers
+| Stage | Name                        | Description                                | Repository |
+|-------|-----------------------------|--------------------------------------------|------------|
+| 1     | Ingestion & Infrastructure  | Terraform + Cloud Functions for ETL        | [salary-survey-iac](https://github.com/Viktor-Soltesz/salary-survey-iac) |
+| 2     | **Modeling & Transformation**   | DBT models, metrics, testing            | **[salary-survey-dbt](https://github.com/Viktor-Soltesz/salary-survey-dbt)** |
+| 3     | Business Intelligence       | Tableau dashboards                         | Tableau Public |
+| 4     | Model Observability         | Drift & lineage (Elementary)               | [salary-survey-edr](https://github.com/Viktor-Soltesz/salary-survey-edr) |
+| 5     | Data Quality Monitoring     | GX monitoring pre/post transform           | [salary-survey-gx](https://github.com/Viktor-Soltesz/salary-survey-gx) |
+| 6     | Statistical Analysis        | ANOVA, regressions, prediction             | [salary-analysis](https://github.com/Viktor-Soltesz/salary-analysis) |
 
-### Staging
+---
 
-Standardizes raw and seed inputs
+## Repository Scope
 
-### Intermediate
+This repository refines the output of the ETL pipeline using **DBT**.  
+It performs:
+- Free-text standardization and classification
+- Enrichment with external reference data
+- Outlier detection and filtering
+- Creation of semantic and aggregated data marts
+- Column- and model-level testing and documentation
+- Preparation of metrics for Tableau and statistical modeling
 
-- Cleans, normalizes, and flags outliers in survey data  
-- Aggregates country-level statistics
+It ensures that downstream users receive clean, validated, and well-documented data for analysis and decision-making.
 
-### Mart
+---
 
-- `mart_survey__base`: Final cleaned dataset  
-- `mart_survey__aggregates`: Summary statistics
+## Detailed Breakdown
 
-### Metrics & Snapshots
+### 1. DBT Structure
 
-- Data quality metrics  
-- Snapshot tracking of economic factors
+- **Staging layer**: Renames and retypes raw input, normalizes country and job fields
+- **Intermediate layer**: Applies logic for outlier handling, free-text mapping, value coercion
+- **Mart layer**:
+  - `mart_cleaned`: fully transformed, row-level data
+  - `mart_aggregated`: grouped by major factors for fast dashboard querying
 
-## Key Features
+---
 
-- Contract enforcement and meta info on mart models
-- Extensive testing: uniqueness, nulls, accepted values, logic
-- GitHub Actions for CI with scheduled DBT runs
-- Source freshness tracking
-- Column descriptions from markdown
-- Exposures and tags defined in the DAG
+### 2. Key Transformations
 
-## Data Quality Checks
+- Standardize and categorize:
+  - Job titles, seniority levels, industries, company size
+- Enrich with:
+  - Inflation rates, GDP per capita, PPP adjustments
+- Handle outliers:
+  - Flag and remove salary entries based on z-scores, country-specific thresholds, and logical anomalies
+- Create derived metrics:
+  - USD-normalized salary, GDP-adjusted salary, ratios across categories
 
-- Nulls and duplicates
-- Invalid or inconsistent entries
-- Outlier detection with modified Z-scores
-- Soft duplicates (salary ±1% with identical attributes)
+---
 
-## Aggregates (Selected)
+### 3. Data Testing & Validation
 
-- Median and average salaries (normalized and raw)
-- P25/P75, IQR, std dev, skewness indicators
+- Built-in `dbt` tests for:
+  - Null checks
+  - Accepted values
+  - Uniqueness and referential integrity
+- Custom tests for:
+  - Outlier count
+  - Uncategorizable responses
+  - Soft duplicates
+- Track data quality metrics:
+  - Nulls, unexpected values, and transformation success rates
 
-## Future Work
+---
 
-- Integration of unit tests: [EqualExperts/dbt-unit-testing](https://github.com/EqualExperts/dbt-unit-testing)
+### 4. Documentation & Semantics
 
-## How to Run
+- Semantic layer defined with `dbt_metrics`
+- All columns, tables, and tests described using `meta` tags
+- `dbt docs` generated locally and hosted via GitHub Pages:
+  - DAG graph
+  - Test summaries
+  - Table and column lineage
 
-- By simply pushing to your github repo, Github Actions kick into action and do the work.
+---
+
+### 5. Scheduling & Alerts
+
+- DBT is scheduled using GitHub Actions
+- On each run:
+  - Model runs + tests + metrics update
+  - If failure or data drift occurs, a Slack alert is triggered
+
+---
+
+## Setup Instructions
+
+1. Clone this repo and install `dbt` and required plugins
+2. Set up a `profiles.yml` file with your BigQuery credentials
+3. Run:
+   ```bash
+   dbt deps
+   dbt seed
+   dbt build
+   dbt docs generate
+   dbt docs serve

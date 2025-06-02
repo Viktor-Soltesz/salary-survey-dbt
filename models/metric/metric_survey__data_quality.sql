@@ -1,7 +1,8 @@
 -- metric_survey__data_quality.sql
 {{ config(
     tags=['layer:metric', 'domain:survey'],
-    materialized = 'table',
+    materialized = 'incremental',
+    unique_key = 'run_date',
     contract={"enforced": false}
 ) }}
 
@@ -23,6 +24,8 @@ final_mart AS (
 )
 
 SELECT
+    CURRENT_TIMESTAMP() AS run_date,
+    COUNT(*) AS total_entries,
     -- Null checks from stg_survey_data
     COUNTIF(base.salary_raw IS NULL) AS null_salary,
     COUNTIF(base.country_raw IS NULL) AS null_country,
@@ -87,3 +90,8 @@ SELECT
 FROM base
 LEFT JOIN after_cleaning ON base.entry_number = after_cleaning.entry_number
 LEFT JOIN after_normalization ON base.entry_number = after_normalization.entry_number
+
+{% if is_incremental() %}
+    -- Avoid re-inserting for the same run_date (safety measure)
+    WHERE CURRENT_DATE() > (SELECT MAX(DATE(run_date)) FROM {{ this }})
+{% endif %}
