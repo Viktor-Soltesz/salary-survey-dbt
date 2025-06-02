@@ -5,7 +5,8 @@ models:
   - name: metric_survey__data_quality
     description: >
       Summary metrics of data quality issues encountered in the survey pipeline.
-      Each column corresponds to a specific issue type detected at various stages.
+      Each column corresponds to a specific issue type detected at various stages,
+      providing both raw counts and derived quality rates.
     meta:
       owner: solteesz.viktor@gmail.com
       maturity: beta
@@ -16,38 +17,93 @@ models:
       related_dashboards: tableau_salary_dashboard
 
     columns:
+      - name: run_date
+        description: The timestamp when the data quality metrics were calculated. This is the unique key for incremental updates.
+        tests:
+          - not_null
+          - unique
+
+      - name: total_entries
+        description: Total number of entries processed from the base survey data for the current run.
+
       - name: null_salary
-        description: Count of entries with missing salary values.
+        description: Count of entries with missing salary values in the raw data.
 
       - name: null_country
-        description: Count of entries with missing country values.
+        description: Count of entries with missing country values in the raw data.
 
       - name: null_seniority_level
-        description: Count of entries with missing seniority level values.
+        description: Count of entries with missing seniority level values in the raw data.
 
       - name: null_job_category
-        description: Count of entries with missing job category values.
+        description: Count of entries with missing job category values in the raw data.
 
       - name: invalid_salary
-        description: Count of entries with negative salary values.
+        description: Count of entries with negative or otherwise invalid salary values in the raw data.
 
       - name: future_date
-        description: Count of entries with survey years in the future.
+        description: Count of entries with survey years that are in the future based on the current date.
 
       - name: intranslatable_country_code
-        description: Count of entries that could not be mapped to a known country code.
+        description: Count of entries where the raw country value could not be mapped to a standardized country code during cleaning.
 
       - name: miscategorized_seniority
-        description: Entries where seniority level was classified as 'other'.
+        description: Count of entries where the seniority level was classified as 'other' during cleaning, indicating potential mapping issues.
 
       - name: miscategorized_company_size
-        description: Entries where company size was classified as 'other'.
+        description: Count of entries where the company size was classified as 'other' during cleaning, indicating potential mapping issues.
 
       - name: soft_duplicates
-        description: Count of entries with same country, seniority, employment status, and similar salary.
+        description: >
+          Count of entries in the final mart considered "soft" duplicates (i.e., multiple entries with the
+          same year, country, seniority level, job category, and similar salary).
 
       - name: exact_duplicates
-        description: Count of duplicated rows across all key raw fields.
-        
+        description: Count of exact duplicate rows across all key raw fields in the base data.
+
       - name: outliers_removed
-        description: Count of rows flagged as outliers and excluded from final mart.
+        description: Count of rows flagged as statistical outliers and subsequently excluded from the final data mart.
+
+      - name: null_salary_rate
+        description: Proportion of entries with missing salary values (null_salary / total_entries).
+
+      - name: null_country_rate
+        description: Proportion of entries with missing country values (null_country / total_entries).
+
+      - name: null_seniority_level_rate
+        description: Proportion of entries with missing seniority level values (null_seniority_level / total_entries).
+
+      - name: null_job_category_rate
+        description: Proportion of entries with missing job category values (null_job_category / total_entries).
+
+      - name: invalid_salary_rate
+        description: Proportion of entries with invalid salary values (invalid_salary / total_entries).
+
+      - name: future_date_rate
+        description: Proportion of entries with future survey years (future_date / total_entries).
+
+      - name: intranslatable_country_code_rate
+        description: Proportion of entries with intranslatable country codes (intranslatable_country_code / total_entries).
+
+      - name: miscategorized_seniority_rate
+        description: Proportion of entries with miscategorized seniority levels (miscategorized_seniority / total_entries).
+
+      - name: miscategorized_company_size_rate
+        description: Proportion of entries with miscategorized company sizes (miscategorized_company_size / total_entries).
+
+      - name: soft_duplicate_rate
+        description: Proportion of soft duplicates (soft_duplicates / total_entries).
+
+      - name: exact_duplicate_rate
+        description: Proportion of exact duplicates (exact_duplicates / total_entries).
+
+      - name: outlier_rate
+        description: Proportion of entries flagged as outliers (outliers_removed / total_entries).
+
+      - name: total_issues
+        description: The sum of all identified data quality issues (nulls, invalid entries, mapping issues, and duplicates).
+
+      - name: data_quality_score
+        description: >
+          An overall data quality score (0-100), calculated as 100 minus the percentage of total issues
+          relative to total entries. A higher score indicates better data quality.
