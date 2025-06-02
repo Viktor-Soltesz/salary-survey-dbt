@@ -85,7 +85,7 @@ SELECT
     ) AS exact_duplicates,
 
     -- Outliers from int_survey_data__outliers_flagged
-    COUNTIF(after_normalization.is_outlier = TRUE) AS outliers_removed
+    COUNTIF(after_normalization.is_outlier = TRUE) AS outliers_removed,
 
     -- Derived metrics: ratios and quality score
     SAFE_DIVIDE(null_salary, total_entries) AS null_salary_rate,
