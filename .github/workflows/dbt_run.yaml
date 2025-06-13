@@ -1,9 +1,9 @@
 name: DBT Run
 
 on:
-  push:
-    paths:
-      - '.github/workflows/dbt_run.yaml'
+  #push:
+  #  paths:
+  #    - '.github/workflows/dbt_run.yaml'
   workflow_dispatch:
   #schedule:
   #  - cron: '0 5 * * 1'  # Every Monday at 5:00 AM UTC

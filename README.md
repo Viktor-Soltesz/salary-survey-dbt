@@ -1,6 +1,6 @@
 # salary-survey-dbt
 
-## Modeling & Transformation (Stage 2 of 6)
+## Modeling & Transformation (Stage 2 of 5)
 
 This repository performs semantic modeling, normalization, data cleaning, and metric creation using **DBT** on data loaded into BigQuery.  
 It transforms raw but structured survey data into reliable, analyzable models for downstream statistical analysis and business intelligence.  
@@ -12,14 +12,14 @@ Part of a modular data stack for analyzing global developer salary survey respon
 
 This project is split into modular repositories, each handling one part of the full ELT and analytics pipeline:
 
-| Stage | Name                        | Description                                | Repository |
+| Stage | Name                        | Description                                | Link |
 |-------|-----------------------------|--------------------------------------------|------------|
-| 1     | Ingestion & Infrastructure  | Terraform + Cloud Functions for ETL        | [salary-survey-iac](https://github.com/Viktor-Soltesz/salary-survey-iac) |
-| 2     | **Modeling & Transformation**   | DBT models, metrics, testing            | **[salary-survey-dbt](https://github.com/Viktor-Soltesz/salary-survey-dbt)** |
-| 3     | Business Intelligence       | Tableau dashboards                         | Tableau Public |
-| 4     | Model Observability         | Drift & lineage (Elementary)               | [salary-survey-edr](https://github.com/Viktor-Soltesz/salary-survey-edr) |
-| 5     | Data Quality Monitoring     | GX monitoring pre/post transform           | [salary-survey-gx](https://github.com/Viktor-Soltesz/salary-survey-gx) |
-| 6     | Statistical Analysis        | ANOVA, regressions, prediction             | [salary-analysis](https://github.com/Viktor-Soltesz/salary-analysis) |
+| ㅤ1     | Ingestion & Infrastructure  | Terraform + Python Cloud Functions        | [salary-survey-iac (GitHub)](https://github.com/Viktor-Soltesz/salary-survey-iac) |
+| **▶️2** | **Data Transformation**   | **DBT data models and testing**               | **[salary-survey-dbt (GitHub)](https://github.com/Viktor-Soltesz/salary-survey-dbt) <br> ㅤ⤷ [DBT docs](https://viktor-soltesz.github.io/salary-survey-dbt-docs/index.html#!/overview)**|
+| ㅤ3     | Data Observability  | Great Expectations & Elementary, <br> model monitoring and data observability     | [salary-survey-gx (GitHub)](https://github.com/Viktor-Soltesz/salary-survey-gx) <br> ㅤ⤷ [GX log](https://viktor-soltesz.github.io/salary-survey-gx/gx_site/index.html) <br> ㅤ⤷ [Elementary report](https://viktor-soltesz.github.io/salary-survey-dbt/elementary_report.html#/report/dashboard) |
+| ㅤ4     | Statistical Modeling    | ANOVA, multiregressions, prediction   | [salary-survey-analysis (GitHub)](https://github.com/Viktor-Soltesz/salary-survey-analysis) |
+| ㅤ5     | Dashboards          | •ㅤInteractive salary exploration <br> •ㅤData Health metrics, gathered during runs <br> •ㅤBilling report, live export from GCP <br> •ㅤBigQuery report, from GCP logging |ㅤ🡢 [Tableau Public](https://public.tableau.com/app/profile/viktor.solt.sz/viz/SoftwareDeveloperSalaries/Dashboard) <br>ㅤ🡢 [Looker Studio](https://lookerstudio.google.com/s/mhwL6JfNlaw)<br>ㅤ🡢 [Looker Studio](https://lookerstudio.google.com/s/tp8jUo4oPRs)<br>ㅤ🡢 [Looker Studio](https://lookerstudio.google.com/s/v2BIFW-_Jak)|
+| ㅤ+     | Extra material | •ㅤPresentation <br> •ㅤData Dictionary <br>  •ㅤSLA Table <br>  •ㅤMy LinkedIn<br>  •ㅤMy CV|ㅤ🡢 [Google Slides](https://docs.google.com/presentation/d/1BHC6QnSpObVpulEcyDLXkW-6YLo2hpnwQ3miQg43iBg/edit?slide=id.g3353e8463a7_0_28#slide=id.g3353e8463a7_0_28) <br>ㅤ🡢 [Google Sheets](https://docs.google.com/spreadsheets/d/1cTikHNzcw3e-gH3N8F4VX-viYlCeLbm5JkFE3Wdcnjo/edit?gid=0#gid=0) <br>ㅤ🡢 [Google Sheets](https://docs.google.com/spreadsheets/d/1r85NlwsGV1DDy4eRBfMjZgI-1_uyIbl1fUazgY00Kz0/edit?usp=sharing) <br>ㅤ🡢 [LinkedIn](https://www.linkedin.com/in/viktor-soltesz/) <br>ㅤ🡢 [Google Docs](https://www.linkedin.com/in/viktor-soltesz/)|
 
 ---
 
@@ -45,9 +45,10 @@ It ensures that downstream users receive clean, validated, and well-documented d
 - **Staging layer**: Renames and retypes raw input, normalizes country and job fields
 - **Intermediate layer**: Applies logic for outlier handling, free-text mapping, value coercion
 - **Mart layer**:
-  - `mart_cleaned`: fully transformed, row-level data
-  - `mart_aggregated`: grouped by major factors for fast dashboard querying
-
+  - `mart_survey__base`: fully transformed, row-level data
+  - `mart_survey__aggregates`: grouped by major factors for fast dashboard querying
+- **Metric layer**:
+  - Tracking data health metrics. Later ingested by Looker dashboards.
 ---
 
 ### 2. Key Transformations
@@ -100,12 +101,6 @@ It ensures that downstream users receive clean, validated, and well-documented d
 
 ## Setup Instructions
 
-1. Clone this repo and install `dbt` and required plugins
-2. Set up a `profiles.yml` file with your BigQuery credentials
-3. Run:
-   ```bash
-   dbt deps
-   dbt seed
-   dbt build
-   dbt docs generate
-   dbt docs serve
+1. Clone this repo.
+2. Use GitHub's workflow dispatch.
+3. Sit back, as GitHub Actions will do the rest.
