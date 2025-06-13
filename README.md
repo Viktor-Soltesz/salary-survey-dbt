@@ -1,6 +1,4 @@
-# salary-survey-dbt
-
-## Modeling & Transformation (Stage 2 of 5)
+# Modeling & Transformation (Stage 2 of 5)
 
 This repository performs semantic modeling, normalization, data cleaning, and metric creation using **DBT** on data loaded into BigQuery.  
 It transforms raw but structured survey data into reliable, analyzable models for downstream statistical analysis and business intelligence.  
